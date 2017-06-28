@@ -1,0 +1,7 @@
+base   authsmf20
+author digger
+email  digger@mysmf.net
+date   2017-05-20
+name   SMF 2.0 Authentication Plugin
+desc   Provides user authentication using SMF 2.0 backend
+url    https://mysmf.net/mods/docuwiki-authsmf
