@@ -410,7 +410,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      */
     public function retrieveGroups($start = 0, $limit = 10)
     {
-
         if (!$this->connectSmfDB()) {
             return false;
         }
@@ -480,5 +479,16 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         unset($row);
 
         return $check;
+    }
+
+    /**
+     * Sanitize a given username
+     *
+     * @param string $user username
+     * @return string the cleaned username
+     */
+    public function cleanUser($user)
+    {
+        return trim($user);
     }
 }
