@@ -46,7 +46,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         $_smf_user_realname = '',
         $_smf_user_username = '',
         $_smf_user_email = '',
-        $_smf_user_is_admin = false,
         $_smf_user_is_banned = false,
         $_smf_user_avatar = '',
         $_smf_user_groups = array(),
@@ -152,6 +151,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
             $this->_cache->removeCache();
 
             $this->_smf_conf['path'] = trim($this->getConf('smf_path'));
+            $this->_smf_conf['path'] = rtrim($this->_smf_conf['path'], '\/');
 
             if (!@file_exists($this->_smf_conf['path'] . '/SSI.php')) {
                 dbglog('SMF not found in path' . $this->_smf_conf['path']);
@@ -196,7 +196,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         $this->_smf_user_id = $user_info['id'];
         $this->_smf_user_username = $user_info['username'];
         $this->_smf_user_email = $user_info['email'];
-        $this->_smf_user_is_admin = $user_info['is_admin'];
         $this->_smf_user_is_banned = $user_info['is_banned'];
         $this->_smf_user_avatar = $user_info['avatar'];
         $this->getUserGroups();
@@ -272,7 +271,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         return $this->_cache->useCache($depends);
     }
 
-
     /**
      * Get SMF user's groups.
      *
@@ -280,20 +278,13 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      */
     private function getUserGroups()
     {
-        if (!$this->connectSmfDB()) {
-            return false;
-        }
-
-        $this->_smf_user_groups = array();
-        $this->_smf_user_id = (int)$this->_smf_user_id;
-
-        if (!$this->_smf_user_id) {
+        if (!$this->connectSmfDB() || !$this->_smf_user_id) {
             return false;
         }
 
         $query = "SELECT m.id_group, m.additional_groups, mg.group_name
                   FROM {$this->_smf_conf['db_prefix']}members m
-                  JOIN {$this->_smf_conf['db_prefix']}membergroups mg ON mg.id_group = m.id_group OR FIND_IN_SET (mg.id_group, m.additional_groups) OR mg.id_group = m.id_post_group
+                  LEFT JOIN {$this->_smf_conf['db_prefix']}membergroups mg ON mg.id_group = m.id_group OR FIND_IN_SET (mg.id_group, m.additional_groups) OR mg.id_group = m.id_post_group
                   WHERE m.id_member = {$this->_smf_user_id}";
 
         $result = $this->_smf_db_link->query($query);
@@ -305,10 +296,11 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
 
         while ($row = $result->fetch_object()) {
             $this->_smf_user_groups[] = $row->group_name;
+            $smf_user_groups_ids[] = $row->id_group;
         }
 
         // Map SMF Admin to DocuWiki Admin
-        if ($this->_smf_user_is_admin) {
+        if (in_array(1, $smf_user_groups_ids)) {
             $this->_smf_user_groups[] = 'admin';
         }
 
@@ -400,7 +392,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         return $user_data;
     }
 
-
     /**
      * Retrieve groups
      *
@@ -410,6 +401,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      */
     public function retrieveGroups($start = 0, $limit = 10)
     {
+        var_dump($start);
         if (!$this->connectSmfDB()) {
             return false;
         }
