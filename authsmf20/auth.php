@@ -102,7 +102,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
     public function trustExternal($user, $pass, $sticky = false)
     {
         global $USERINFO;
-
+        var_dump($USERINFO);
         if (empty($user) || empty($pass)) {
             $is_logged = $this->loginSSI();
         } else {
@@ -197,7 +197,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         $this->_smf_user_username = $user_info['username'];
         $this->_smf_user_email = $user_info['email'];
         $this->_smf_user_is_banned = $user_info['is_banned'];
-        $this->_smf_user_avatar = $user_info['avatar'];
         $this->getUserGroups();
 
         return true;
@@ -323,12 +322,12 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      * @param   bool $requireGroups Whether or not the returned data must include groups
      * @return  false|array Containing user data or false
      *
-     * array['realname']    string  User's real name
-     * array['username']    string  User's username
-     * array['email']       string  User's email address
-     * array['smf_user_id'] string  User's ID
-     * array['smf_profile'] string  User's link to profile
-     * array['grps']        array   User's groups
+     * array['realname']        string  User's real name
+     * array['username']        string  User's username
+     * array['email']           string  User's email address
+     * array['smf_user_id']     string  User's ID
+     * array['smf_profile']     string  User's link to profile
+     * array['smf_user_groups'] array   User's groups
      */
     public function getUserData($user, $requireGroups = true)
     {
@@ -354,8 +353,9 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
 
             $user = $this->_smf_db_link->real_escape_string($user);
 
-            $query = "SELECT id_member, real_name, email_address, avatar
-                      FROM {$this->_smf_conf['db_prefix']}members
+            $query = "SELECT m.id_member, m.real_name, m.email_address, m.gender, m.location, m.usertitle, m.signature, m.avatar, a.id_attach
+                      FROM {$this->_smf_conf['db_prefix']}members m
+                      LEFT JOIN {$this->_smf_conf['db_prefix']}attachments a ON a.id_member = m.id_member
                       WHERE member_name = '{$user}'";
 
             $result = $this->_smf_db_link->query($query);
@@ -369,18 +369,41 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
 
             $this->_smf_user_id = $row->id_member;
             $this->getUserGroups();
+            $user_data['smf_user_groups'] = $this->_smf_user_groups;
 
             $user_data['smf_user_id'] = $row->id_member;
             $user_data['smf_user_username'] = $user;
             $user_data['smf_user_realname'] = $row->real_name;
-            $user_data['smf_user_email'] = $row->email_address;
-            $user_data['smf_user_avatar'] = $row->avatar;
-            $user_data['smf_user_profile'] = $this->_smf_conf['boardurl'] . '/index.php?action=profile;u=' . $this->_smf_user_id;
-            $user_data['grps'] = $this->_smf_user_groups;
 
             if (empty($user_data['smf_user_realname'])) {
                 $user_data['smf_user_realname'] = $user_data['smf_user_username'];
             }
+
+            $user_data['smf_user_email'] = $row->email_address;
+
+            if ($row->gender == 1) {
+                $user_data['smf_user_gender'] = 'male';
+            } elseif ($row->gender == 2) {
+                $user_data['smf_user_gender'] = 'female';
+            } else {
+                $user_data['smf_user_gender'] = 'unknown';
+            }
+
+            $user_data['smf_user_location'] = $row->location;
+            $user_data['smf_user_usertitle'] = $row->usertitle;
+            $user_data['smf_user_profile'] = $this->_smf_conf['boardurl'] . '/index.php?action=profile;u=' . $this->_smf_user_id;
+
+            if (!empty($row->avatar)) {
+                $user_data['smf_user_avatar'] = $this->getAvatarUrl($row->avatar);
+            } else {
+                if (!empty($row->id_attach)) {
+                    $user_data['smf_user_avatar'] = $this->getAvatarUrl($row->id_attach);
+                } else {
+                    $user_data['smf_user_avatar'] = '';
+                }
+            }
+
+            var_dump($user_data['smf_user_avatar']);
 
             $result->close();
             unset($row);
@@ -401,7 +424,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      */
     public function retrieveGroups($start = 0, $limit = 10)
     {
-        var_dump($start);
         if (!$this->connectSmfDB()) {
             return false;
         }
@@ -443,6 +465,8 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
             return false;
         }
 
+        // if logged return true;
+
         $user = $this->_smf_db_link->real_escape_string($user);
 
         $query = "SELECT id_member, passwd, email_address
@@ -459,7 +483,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         $row = $result->fetch_object();
 
         if ($row->passwd == sha1(strtolower($user) . $pass)) {
-
             $this->_smf_user_id = $row->id_member;
             $this->_smf_user_username = $user;
             $this->_smf_user_email = $row->email_address;
@@ -483,4 +506,30 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
     {
         return trim($user);
     }
+
+    /**
+     * Get avatar url
+     *
+     * @param string $avatar
+     * @return string avatar url
+     */
+    function getAvatarUrl($avatar = '')
+    {
+        //TODO: Custom avatars url?
+        $avatar = trim($avatar);
+
+        if (empty($avatar)) {
+            return '';
+        } elseif ($avatar == (int)$avatar) {
+            // Avatar uploaded as attachment
+            return $this->_smf_conf['boardurl'] . '/index.php?action=dlattach;attach=' . $avatar . ';type=avatar';
+        } elseif (preg_match('#^https?://#', $avatar)) {
+            // Link to external avatar
+            return $avatar;
+        } else {
+            // Avatar from SMF library
+            return $this->_smf_conf['boardurl'] . '/avatars/' . $avatar;
+        }
+    }
+
 }

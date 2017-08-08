@@ -1,0 +1,94 @@
+/**
+ * Action Plugin for authsmf20.
+ *
+ * @package SMF DocuWiki
+ * @file style.css
+ * @author Vadim Nevorotin <malamut@ubuntu.ru>
+ * @license  GPL 2 (http://www.gnu.org/licenses/gpl.html)
+ * @version 1.0
+ */
+
+a.userlink {
+    padding-left: 18px;
+    position: relative;
+    z-index: 42;
+}
+
+div.dokuwiki .user > a.userlink {
+    color: inherit;
+}
+
+a.userlink:hover,
+a.userlink:active {
+    text-decoration: none;
+    z-index: 45;
+}
+
+a.userlink.gender-male {
+    background: url('images/user-male.png') no-repeat 0% 50%;
+}
+
+a.userlink.gender-female {
+    background: url('images/user-female.png') no-repeat 0% 50%;
+}
+
+a.userlink.gender-unknown {
+    background: url('images/user-unknown.png') no-repeat 0% 50%;
+}
+
+/* Popup */
+
+a.userlink:hover span.userlink-popup {
+    display: block;
+    white-space: pre;
+}
+
+span.userlink-popup {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 18px;
+    padding: 8px 8px 8px 0px;
+    height: auto;
+    min-height: 20px;
+    background: __background__;
+    color: __text__;
+    border: 1px solid __border__;
+    max-width: 400px;
+    font-size: 1em;
+    line-height: 1em;
+    font-weight: normal;
+    font-style: normal;
+}
+
+span.userlink-popup.top {
+    top: auto;
+    bottom: 100%;
+}
+
+span.userlink-popup > * {
+    display: inline-block;
+    vertical-align: text-top;
+    padding-left: 8px;
+}
+
+span.userlink-popup > img {
+    max-width: 100px;
+    max-height: 100px;
+}
+
+span.userlink-popup > * > * {
+    display: block;
+    float: left;
+    clear: left;
+    margin-top: 8px;
+}
+
+span.userlink-popup > * > *:first-child {
+    margin-top: 0px;
+}
+
+span.userlink-popup strong {
+    font-size: 1.2em;
+    line-height: 1.2em;
+}
