@@ -6,7 +6,7 @@
  * @file auth.php
  * @author digger <digger@mysmf.net>
  * @license GPL 2 (http://www.gnu.org/licenses/gpl.html)
- * @version 1.0 beta1
+ * @version 1.0 beta2
  */
 
 /*
@@ -136,10 +136,11 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      */
     public function logOff()
     {
-        $link = ssi_logout(DOKU_URL, 'array');
-        preg_match('/href="(.+)"/iU', $link, $url);
         unset($_SESSION[DOKU_COOKIE]);
 
+        // This doesn't work now because SMF SSI API have session logout issue
+        //$link = ssi_logout(DOKU_URL, 'array');
+        //preg_match('/href="(.+)"/iU', $link, $url);
         //send_redirect($url[1]);
     }
 
@@ -150,31 +151,23 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      */
     private function loadConfiguration()
     {
-        if ($this->getSmfCache()) {
-            $this->_smf_conf = unserialize($this->_cache->retrieveCache(false));
+        $ssi_guest_access = true;
+
+        $this->_smf_conf['path'] = rtrim(trim($this->getConf('smf_path')), '\/');
+        if (!file_exists($this->_smf_conf['path'] . '/SSI.php')) {
+            dbglog('SMF not found in path' . $this->_smf_conf['path']);
+            return false;
         } else {
-            $this->_cache->removeCache();
-
-            $this->_smf_conf['path'] = rtrim(trim($this->getConf('smf_path')), '\/');
-
-            if (!file_exists($this->_smf_conf['path'] . '/SSI.php')) {
-                dbglog('SMF not found in path' . $this->_smf_conf['path']);
-                return false;
-            }
-
-            $ssi_guest_access = true;
             include_once($this->_smf_conf['path'] . '/SSI.php');
-
-            $this->_smf_conf['boardurl'] = $boardurl;
-            $this->_smf_conf['db_server'] = $db_server;
-            $this->_smf_conf['db_name'] = $db_name;
-            $this->_smf_conf['db_user'] = $db_user;
-            $this->_smf_conf['db_passwd'] = $db_passwd;
-            $this->_smf_conf['db_character_set'] = $db_character_set;
-            $this->_smf_conf['db_prefix'] = $db_prefix;
-
-            $this->_cache->storeCache(serialize($this->_smf_conf));
         }
+
+        $this->_smf_conf['boardurl'] = $boardurl;
+        $this->_smf_conf['db_server'] = $db_server;
+        $this->_smf_conf['db_name'] = $db_name;
+        $this->_smf_conf['db_user'] = $db_user;
+        $this->_smf_conf['db_passwd'] = $db_passwd;
+        $this->_smf_conf['db_character_set'] = $db_character_set;
+        $this->_smf_conf['db_prefix'] = $db_prefix;
 
         return (!empty($this->_smf_conf['boardurl']));
     }
