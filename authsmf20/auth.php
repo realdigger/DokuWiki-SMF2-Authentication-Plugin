@@ -6,7 +6,7 @@
  * @file auth.php
  * @author digger <digger@mysmf.net>
  * @license GPL 2 (http://www.gnu.org/licenses/gpl.html)
- * @version 1.0
+ * @version 1.0 beta1
  */
 
 /*
@@ -52,7 +52,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         $_smf_user_profile = '',
         $_cache = null,
         $_cache_duration = 0,
-        $_cache_ext_name = '.smf20cache';
+        $_cache_ext_name = '.authsmf20';
 
     CONST CACHE_DURATION_UNIT = 86400;
 
@@ -97,28 +97,36 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      * @param   string $user Username
      * @param   string $pass Cleartext Password
      * @param   boolean $sticky Cookie should not expire
-     * @return  boolean         True on successful auth
+     * @return  boolean True on successful auth
      */
-    public function trustExternal($user, $pass, $sticky = false)
+    public function trustExternal($user = '', $pass = '', $sticky = false)
     {
         global $USERINFO;
-        var_dump($USERINFO);
-        if (empty($user) || empty($pass)) {
-            $is_logged = $this->loginSSI();
-        } else {
-            $is_logged = $this->checkPass($user, $pass);
+
+        $sticky ? $sticky = true : $sticky = false;
+
+        if ($this->doLoginCookie()) {
+            return true; // User already logged in
         }
 
-        if (!$is_logged || empty($this->_smf_user_username) || empty($this->_smf_user_email)) {
+        if ($user) {
+            $is_logged = $this->checkPass($user, $pass); // Try to login over DocuWIki login form
+        } else {
+            $is_logged = $this->doLoginSSI(); // Try to login over SMF SSI API
+        }
+
+        if (!$is_logged) {
+            if ($user) {
+                msg($this->getLang('login_error'), -1);
+            }
             return false;
         }
 
-        $USERINFO['name'] = $this->_smf_user_username;
-        $USERINFO['mail'] = $this->_smf_user_email;
-        $USERINFO['grps'] = $this->_smf_user_groups;
-        $_SERVER['REMOTE_USER'] = $USERINFO['name'];
-        $_SESSION[DOKU_COOKIE]['auth']['user'] = $USERINFO['name'];
+        $USERINFO['name'] = $_SESSION[DOKU_COOKIE]['auth']['user'] = $this->_smf_user_username;
+        $USERINFO['mail'] = $_SESSION[DOKU_COOKIE]['auth']['mail'] = $this->_smf_user_email;
+        $USERINFO['grps'] = $_SESSION[DOKU_COOKIE]['auth']['grps'] = $this->_smf_user_groups;
         $_SESSION[DOKU_COOKIE]['auth']['info'] = $USERINFO;
+        $_SERVER['REMOTE_USER'] = $USERINFO['name'];
 
         return true;
     }
@@ -128,14 +136,11 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      */
     public function logOff()
     {
-        if ($this->_smf_user_id && !empty($this->_smf_conf['boardurl'])) {
-            global $context;
+        $link = ssi_logout(DOKU_URL, 'array');
+        preg_match('/href="(.+)"/iU', $link, $url);
+        unset($_SESSION[DOKU_COOKIE]);
 
-            include_once($this->_smf_conf['path'] . '/SSI.php');
-            $url = $this->_smf_conf['boardurl'] . '/index.php?action=logout;' . $context['session_var'] . '=' . $context['session_id'];
-            // $_SESSION['logout_url'] = DOKU_URL;
-            send_redirect($url);
-        }
+        //send_redirect($url[1]);
     }
 
     /**
@@ -150,15 +155,15 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         } else {
             $this->_cache->removeCache();
 
-            $this->_smf_conf['path'] = trim($this->getConf('smf_path'));
-            $this->_smf_conf['path'] = rtrim($this->_smf_conf['path'], '\/');
+            $this->_smf_conf['path'] = rtrim(trim($this->getConf('smf_path')), '\/');
 
-            if (!@file_exists($this->_smf_conf['path'] . '/SSI.php')) {
+            if (!file_exists($this->_smf_conf['path'] . '/SSI.php')) {
                 dbglog('SMF not found in path' . $this->_smf_conf['path']);
                 return false;
             }
 
-            include($this->_smf_conf['path'] . '/SSI.php');
+            $ssi_guest_access = true;
+            include_once($this->_smf_conf['path'] . '/SSI.php');
 
             $this->_smf_conf['boardurl'] = $boardurl;
             $this->_smf_conf['db_server'] = $db_server;
@@ -167,7 +172,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
             $this->_smf_conf['db_passwd'] = $db_passwd;
             $this->_smf_conf['db_character_set'] = $db_character_set;
             $this->_smf_conf['db_prefix'] = $db_prefix;
-
 
             $this->_cache->storeCache(serialize($this->_smf_conf));
         }
@@ -180,13 +184,8 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      *
      * @return  boolean True on successful login
      */
-    private function loginSSI()
+    private function doLoginSSI()
     {
-        if (!$this->connectSmfDB()) {
-            return false;
-        }
-
-        include_once($this->_smf_conf['path'] . '/SSI.php');
         $user_info = ssi_welcome('array');
 
         if (empty($user_info['is_logged'])) {
@@ -196,8 +195,29 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         $this->_smf_user_id = $user_info['id'];
         $this->_smf_user_username = $user_info['username'];
         $this->_smf_user_email = $user_info['email'];
-        $this->_smf_user_is_banned = $user_info['is_banned'];
         $this->getUserGroups();
+
+        return true;
+    }
+
+    /**
+     * Authenticate the user using DocuWiki Cookie.
+     *
+     * @return  boolean True on successful login
+     */
+    private function doLoginCookie()
+    {
+        global $USERINFO;
+
+        if (empty($_SESSION[DOKU_COOKIE]['auth']['info'])) {
+            return false;
+        }
+
+        $USERINFO['name'] = $_SESSION[DOKU_COOKIE]['auth']['user'];
+        $USERINFO['mail'] = $_SESSION[DOKU_COOKIE]['auth']['mail'];
+        $USERINFO['grps'] = $_SESSION[DOKU_COOKIE]['auth']['grps'];
+
+        $_SERVER['REMOTE_USER'] = $_SESSION[DOKU_COOKIE]['auth']['user'];
 
         return true;
     }
@@ -277,11 +297,12 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      */
     private function getUserGroups()
     {
+
         if (!$this->connectSmfDB() || !$this->_smf_user_id) {
             return false;
         }
 
-        $query = "SELECT m.id_group, m.additional_groups, mg.group_name
+        $query = "SELECT mg.group_name
                   FROM {$this->_smf_conf['db_prefix']}members m
                   LEFT JOIN {$this->_smf_conf['db_prefix']}membergroups mg ON mg.id_group = m.id_group OR FIND_IN_SET (mg.id_group, m.additional_groups) OR mg.id_group = m.id_post_group
                   WHERE m.id_member = {$this->_smf_user_id}";
@@ -294,14 +315,17 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         }
 
         while ($row = $result->fetch_object()) {
-            $this->_smf_user_groups[] = $row->group_name;
-            $smf_user_groups_ids[] = $row->id_group;
+            if ($row->id_group == 1) {
+                $this->_smf_user_groups[] = 'admin'; // Map SMF Admin to DocuWiki Admin
+            } else {
+                $this->_smf_user_groups[] = $row->group_name;
+            }
         }
 
-        // Map SMF Admin to DocuWiki Admin
-        if (in_array(1, $smf_user_groups_ids)) {
-            $this->_smf_user_groups[] = 'admin';
-        }
+        if (!$this->_smf_user_is_banned) {
+            $this->_smf_user_groups[] = 'user';
+        } // Banned users as guests
+        $this->_smf_user_groups = array_unique($this->_smf_user_groups);
 
         $result->close();
         unset($row);
@@ -337,9 +361,11 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
 
         $user_data = false;
 
+
         $this->_cache_duration = (int)($this->getConf('smf_cache'));
         $depends = array('age' => self::CACHE_DURATION_UNIT * $this->_cache_duration);
         $cache = new cache('authsmf20_getUserData_' . $user, $this->_cache_ext_name);
+
 
         if (($this->_cache_duration > 0) && $cache->useCache($depends)) {
             $user_data = unserialize($cache->retrieveCache(false));
@@ -353,9 +379,9 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
 
             $user = $this->_smf_db_link->real_escape_string($user);
 
-            $query = "SELECT m.id_member, m.real_name, m.email_address, m.gender, m.location, m.usertitle, m.signature, m.avatar, a.id_attach
+            $query = "SELECT m.id_member, m.real_name, m.email_address, m.gender, m.location, m.usertitle, m.personal_text, m.signature, IF(m.avatar = '', a.id_attach, m.avatar) AS avatar
                       FROM {$this->_smf_conf['db_prefix']}members m
-                      LEFT JOIN {$this->_smf_conf['db_prefix']}attachments a ON a.id_member = m.id_member
+                      LEFT JOIN {$this->_smf_conf['db_prefix']}attachments a ON a.id_member = m.id_member AND a.id_msg = 0
                       WHERE member_name = '{$user}'";
 
             $result = $this->_smf_db_link->query($query);
@@ -369,8 +395,8 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
 
             $this->_smf_user_id = $row->id_member;
             $this->getUserGroups();
-            $user_data['smf_user_groups'] = $this->_smf_user_groups;
 
+            $user_data['smf_user_groups'] = array_unique($this->_smf_user_groups);
             $user_data['smf_user_id'] = $row->id_member;
             $user_data['smf_user_username'] = $user;
             $user_data['smf_user_realname'] = $row->real_name;
@@ -391,19 +417,9 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
 
             $user_data['smf_user_location'] = $row->location;
             $user_data['smf_user_usertitle'] = $row->usertitle;
+            $user_data['smf_personal_text'] = $row->personal_text;
             $user_data['smf_user_profile'] = $this->_smf_conf['boardurl'] . '/index.php?action=profile;u=' . $this->_smf_user_id;
-
-            if (!empty($row->avatar)) {
-                $user_data['smf_user_avatar'] = $this->getAvatarUrl($row->avatar);
-            } else {
-                if (!empty($row->id_attach)) {
-                    $user_data['smf_user_avatar'] = $this->getAvatarUrl($row->id_attach);
-                } else {
-                    $user_data['smf_user_avatar'] = '';
-                }
-            }
-
-            var_dump($user_data['smf_user_avatar']);
+            $user_data['smf_user_avatar'] = $this->getAvatarUrl($row->avatar);
 
             $result->close();
             unset($row);
@@ -412,6 +428,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         }
 
         $cache = null;
+        unset($cache);
         return $user_data;
     }
 
@@ -455,45 +472,26 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      *
      * @param   string $user User name
      * @param   string $pass Clear text password
-     * @return  bool            True for success, false otherwise
+     * @return  bool   True for success, false otherwise
      */
+
     public function checkPass($user = '', $pass = '')
     {
-        $check = false;
+        $check = ssi_checkPassword($user, $pass, true);
 
-        if (!$this->connectSmfDB() || !$user || !$pass) {
+        if (empty($check)) {
             return false;
         }
 
-        // if logged return true;
+        $user_data = ssi_queryMembers('member_name = {string:user}', array('user' => $user), 1, 'id_member', 'array');
+        $user_data = array_shift($user_data);
 
-        $user = $this->_smf_db_link->real_escape_string($user);
+        $this->_smf_user_id = $user_data['id'];
+        $this->_smf_user_username = $user_data['username'];
+        $this->_smf_user_email = $user_data['email'];
+        $this->getUserGroups();
 
-        $query = "SELECT id_member, passwd, email_address
-                      FROM {$this->_smf_conf['db_prefix']}members
-                      WHERE member_name = '{$user}'";
-
-        $result = $this->_smf_db_link->query($query);
-
-        if (!$result) {
-            dbglog("User {$user} not found in SMF database");
-            return false;
-        }
-
-        $row = $result->fetch_object();
-
-        if ($row->passwd == sha1(strtolower($user) . $pass)) {
-            $this->_smf_user_id = $row->id_member;
-            $this->_smf_user_username = $user;
-            $this->_smf_user_email = $row->email_address;
-            $this->getUserGroups();
-            $check = true;
-        }
-
-        $result->close();
-        unset($row);
-
-        return $check;
+        return true;
     }
 
     /**
@@ -513,23 +511,24 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      * @param string $avatar
      * @return string avatar url
      */
-    function getAvatarUrl($avatar = '')
+    private function getAvatarUrl($avatar = '')
     {
-        //TODO: Custom avatars url?
         $avatar = trim($avatar);
 
+        // No avatar
         if (empty($avatar)) {
             return '';
-        } elseif ($avatar == (int)$avatar) {
+        } elseif ($avatar == (string)(int)$avatar) {
             // Avatar uploaded as attachment
             return $this->_smf_conf['boardurl'] . '/index.php?action=dlattach;attach=' . $avatar . ';type=avatar';
-        } elseif (preg_match('#^https?://#', $avatar)) {
-            // Link to external avatar
+        } elseif (preg_match('#^https?://#i', $avatar)) {
+            // Avatar is a link to external image
             return $avatar;
         } else {
             // Avatar from SMF library
             return $this->_smf_conf['boardurl'] . '/avatars/' . $avatar;
         }
+        // TODO: Custom avatars url
+        // TODO: Default avatar for empty one
     }
-
 }

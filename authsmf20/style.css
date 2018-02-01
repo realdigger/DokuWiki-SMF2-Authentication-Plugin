@@ -4,6 +4,7 @@
  * @package SMF DocuWiki
  * @file style.css
  * @author Vadim Nevorotin <malamut@ubuntu.ru>
+ * @author digger <digger@mysmf.net>
  * @license  GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @version 1.0
  */
@@ -48,17 +49,21 @@ span.userlink-popup {
     position: absolute;
     top: 100%;
     left: 18px;
-    padding: 8px 8px 8px 0px;
+    padding: 8px;
     height: auto;
     min-height: 20px;
     background: __background__;
     color: __text__;
     border: 1px solid __border__;
+    border-radius: 2px;
+    box-shadow: 0 0 .5em #999;
     max-width: 400px;
     font-size: 1em;
     line-height: 1em;
     font-weight: normal;
     font-style: normal;
+    overflow: hidden;
+    word-wrap: break-word;
 }
 
 span.userlink-popup.top {

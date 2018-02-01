@@ -6,7 +6,7 @@
  * @file action.php
  * @author digger <digger@mysmf.net>
  * @license  GPL 2 (http://www.gnu.org/licenses/gpl.html)
- * @version 1.0
+ * @version 1.0 beta1
  */
 
 if (!defined('DOKU_INC')) {
@@ -62,30 +62,12 @@ class action_plugin_authsmf20 extends DokuWiki_Plugin
             $event->data['userlink'] = $event->data['name'];
         }
 
-
         $event->data['userlink'] = $this->renderProfileLink($data);
-
-        //$event->data['textonly'] = true;
-        //$event->data['userlink'] = 'Admin';
-        /*
-        $event->data['link'] = array( //setting 'link' to false disables linking
-            'target' => '_blank',
-            'pre' => '*',
-            'suf' => '*',
-            'style' => '',
-            'more' => '*',
-            'url' => '#',
-            'title' => $event->data['name'],
-            'class' => 'test interwiki iw_use'
-        );
-        */
     }
 
     /*
 	 * Render all availiable information as a XHTML link to user's profile
-	 *
 	 * @param  $userinfo   array of all nessesary data for creating a link
-
 	 * @param  $popup  display popup at top of a link ('top'), bottom ('bottom') or don't display at all ('none')
 	 * @return string  XHTML markup for link to user's profile
 	*/
@@ -98,7 +80,9 @@ class action_plugin_authsmf20 extends DokuWiki_Plugin
                 hsc($userinfo['smf_user_realname']);
 
             // Test if we have some data to show
-            $fields = array_map('trim', explode(",", $this->getConf('fields')));
+            //$fields = array_map('trim', explode(",", $this->getConf('fields')));
+            $fields = array('smf_personal_text', 'smf_user_usertitle');
+
             $is_fields = false;
             foreach ($fields as $field) {
                 if ($userinfo[$field]) {
@@ -108,10 +92,9 @@ class action_plugin_authsmf20 extends DokuWiki_Plugin
 
             // If we should display popup and have some data for it...
             if (($popup == 'top' or $popup == 'bottom') and
-                ($userinfo['smf_user_avatar'] or $is_fields)
-            ) {
+                ($userinfo['smf_user_avatar'] or $is_fields)) {
                 $result .= '<span class="userlink-popup ' . $popup . '">';
-                if ($userinfo['avatar']) {
+                if ($userinfo['smf_user_avatar']) {
                     $result .= '<img src="' . $userinfo['smf_user_avatar'] . '" alt="' . hsc($userinfo['smf_user_realname']) . '" />';
                 }
                 $result .= '<span><strong>' . hsc($userinfo['smf_user_realname']) . '</strong>';
@@ -122,6 +105,7 @@ class action_plugin_authsmf20 extends DokuWiki_Plugin
                     }
                 }
                 $result .= '</span></span></a>';
+
             } else {
                 $result .= '</a>';
             }

@@ -9,5 +9,6 @@
  * @version 1.0
  */
 
-$lang['config_error']       = 'Ошибка конфигурации: сообщите администратору.';
-$lang['database_error']     = 'Ошибка БД: сообщите администратору.';
+$lang['config_error'] = 'Configuration error: contact an administrator.';
+$lang['database_error'] = 'Database error: contact an administrator.';
+$lang['login_error'] = 'Login error: incorrect username or password.';
