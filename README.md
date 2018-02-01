@@ -1,9 +1,9 @@
-[![GitHub release](https://img.shields.io/github/release/realdigger/SMF-DokuWiki-Bridge.svg)]()
-[![Build Status](https://travis-ci.org/realdigger/SMF-DokuWiki-Bridge.svg?branch=master)](https://travis-ci.org/realdigger/SMF-DokuWiki-Bridge)
+[![GitHub release](https://img.shields.io/github/release/realdigger/DokuWiki-SMF2-Authentication-Plugin.svg)]()
+[![Build Status](https://travis-ci.org/realdigger/DokuWiki-SMF2-Authentication-Plugin.svg?branch=master)](https://travis-ci.org/realdigger/DokuWiki-SMF2-Authentication-Plugin)
 [![SMF](https://img.shields.io/badge/SMF-2.0-blue.svg?style==flat)](https://simplemachines.org)
 [![DokuWiki](https://img.shields.io/badge/DokuWiki-Frusterick%20Manners-blue.svg?style==flat)](https://www.dokuwiki.org)
 
-# DokuWiki SMF2 Authentication Plugin (authsmf20) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=DokuWiki%20SMF2%20Authentication%20Plugin&url=https://github.com/realdigger/SMF-DokuWiki-Bridge&hashtags=smf,dokuwiki,)
+# DokuWiki SMF2 Authentication Plugin (authsmf20) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=DokuWiki%20SMF2%20Authentication%20Plugin&url=https://github.com/realdigger/DokuWiki-SMF2-Authentication-Plugin&hashtags=smf,dokuwiki,)
 
 * **Author:** digger [http://mysmf.net](http://mysmf.net)
 * **License:** GPL 2
@@ -11,7 +11,7 @@
 * **Languages:** English, Russian
 
 ## Installation  
-Download latest release tar.gz file from [releases page](https://github.com/realdigger/SMF-DokuWiki-Bridge/releases).  
+Download latest release tar.gz file from [releases page](https://github.com/realdigger/DokuWiki-SMF2-Authentication-Plugin/releases).  
 Unpack authsmf20 and upload to DokuWiki lib/plugins dir.  
 Set correct path to SMF in DokuWiki Authsmf20 plugin settings.
 
