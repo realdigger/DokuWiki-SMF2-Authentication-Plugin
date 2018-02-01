@@ -2,7 +2,7 @@
 /**
  * Action Plugin for authsmf20.
  *
- * @package SMF DocuWiki
+ * @package SMF DokuWiki
  * @file action.php
  * @author digger <digger@mysmf.net>
  * @license  GPL 2 (http://www.gnu.org/licenses/gpl.html)

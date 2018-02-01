@@ -2,7 +2,7 @@
 /**
  * Authentication Plugin for authsmf20.
  *
- * @package SMF DocuWiki
+ * @package SMF DokuWiki
  * @file auth.php
  * @author digger <digger@mysmf.net>
  * @license GPL 2 (http://www.gnu.org/licenses/gpl.html)
@@ -110,7 +110,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
         }
 
         if ($user) {
-            $is_logged = $this->checkPass($user, $pass); // Try to login over DocuWIki login form
+            $is_logged = $this->checkPass($user, $pass); // Try to login over DokuWiki login form
         } else {
             $is_logged = $this->doLoginSSI(); // Try to login over SMF SSI API
         }
@@ -201,7 +201,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
     }
 
     /**
-     * Authenticate the user using DocuWiki Cookie.
+     * Authenticate the user using DokuWiki Cookie.
      *
      * @return  boolean True on successful login
      */
@@ -316,7 +316,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
 
         while ($row = $result->fetch_object()) {
             if ($row->id_group == 1) {
-                $this->_smf_user_groups[] = 'admin'; // Map SMF Admin to DocuWiki Admin
+                $this->_smf_user_groups[] = 'admin'; // Map SMF Admin to DokuWiki Admin
             } else {
                 $this->_smf_user_groups[] = $row->group_name;
             }
