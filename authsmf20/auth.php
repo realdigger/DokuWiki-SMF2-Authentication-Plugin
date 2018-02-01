@@ -302,7 +302,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
             return false;
         }
 
-        $query = "SELECT mg.group_name
+        $query = "SELECT mg.group_name, m.id_group
                   FROM {$this->_smf_conf['db_prefix']}members m
                   LEFT JOIN {$this->_smf_conf['db_prefix']}membergroups mg ON mg.id_group = m.id_group OR FIND_IN_SET (mg.id_group, m.additional_groups) OR mg.id_group = m.id_post_group
                   WHERE m.id_member = {$this->_smf_user_id}";
@@ -326,7 +326,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
             $this->_smf_user_groups[] = 'user';
         } // Banned users as guests
         $this->_smf_user_groups = array_unique($this->_smf_user_groups);
-
+var_dump($this->_smf_user_groups);
         $result->close();
         unset($row);
         return true;
