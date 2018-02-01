@@ -326,7 +326,7 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
             $this->_smf_user_groups[] = 'user';
         } // Banned users as guests
         $this->_smf_user_groups = array_unique($this->_smf_user_groups);
-var_dump($this->_smf_user_groups);
+
         $result->close();
         unset($row);
         return true;
