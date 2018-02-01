@@ -1,5 +1,5 @@
 [![GitHub release](https://img.shields.io/github/release/realdigger/SMF-DocuWiki-Bridge.svg)]()
-[![Build Status](https://travis-ci.org/realdigger/SMF-DocuWiki-Bridge.svg?branch=master)](https://travis-ci.org/realdigger/SMF-Project)
+[![Build Status](https://travis-ci.org/realdigger/SMF-DocuWiki-Bridge.svg?branch=master)](https://travis-ci.org/realdigger/SMF-DocuWiki-Bridge)
 [![SMF](https://img.shields.io/badge/SMF-2.0-blue.svg?style==flat)](https://simplemachines.org)
 [![Hooks](https://img.shields.io/badge/DocuWiki-Frusterick%20Manners-blue.svg?style==flat)]()
 
@@ -13,7 +13,7 @@
 ## Installation  
 Download latest release tar.gz file from [releases page](https://github.com/realdigger/SMF-DocuWiki-Bridge/releases).  
 Unpack authsmf20 and upload to DocuWiki lib/plugins dir.  
-SET correct path to SMF in DocuWiki Authsmf20 plugin settings.
+Set correct path to SMF in DocuWiki Authsmf20 plugin settings.
 
 ## Description
 DokuWiki plugin used to authenticate users using SMF 2.0 backend.
