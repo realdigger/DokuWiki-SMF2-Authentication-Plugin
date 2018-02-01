@@ -1,7 +1,7 @@
 [![GitHub release](https://img.shields.io/github/release/realdigger/SMF-DokuWiki-Bridge.svg)]()
 [![Build Status](https://travis-ci.org/realdigger/SMF-DokuWiki-Bridge.svg?branch=master)](https://travis-ci.org/realdigger/SMF-DokuWiki-Bridge)
 [![SMF](https://img.shields.io/badge/SMF-2.0-blue.svg?style==flat)](https://simplemachines.org)
-[![Hooks](https://img.shields.io/badge/DokuWiki-Frusterick%20Manners-blue.svg?style==flat)]()
+[![DokuWiki](https://img.shields.io/badge/DokuWiki-Frusterick%20Manners-blue.svg?style==flat)](https://www.dokuwiki.org)
 
 # SMF DokuWiki Auth Bridge (authsmf20) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=SMF%20DokuWiki%20Auth%20Bridge&url=https://github.com/realdigger/SMF-DokuWiki-Bridge&hashtags=smf,dokuwiki,)
 
