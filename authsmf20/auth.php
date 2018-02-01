@@ -261,29 +261,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
     }
 
     /**
-     * Use cache for SMF configuration.
-     *
-     * @return  Object for Cache SMF configuration settings
-     */
-    private function getSmfCache()
-    {
-        $depends = array();
-
-        if ($this->_cache === null) {
-
-            $this->_cache = new cache('authsmf20', $this->_cache_ext_name);
-        }
-
-        $this->_cache_duration = intval($this->getConf('smf_cache'));
-        if ($this->_cache_duration > 0) {
-            $depends['age'] = self::CACHE_DURATION_UNIT * $this->_cache_duration;
-        } else {
-            $depends['purge'] = true;
-        }
-        return $this->_cache->useCache($depends);
-    }
-
-    /**
      * Get SMF user's groups.
      *
      * @return  boolean True for success, false otherwise
@@ -467,7 +444,6 @@ class auth_plugin_authsmf20 extends DokuWiki_Auth_Plugin
      * @param   string $pass Clear text password
      * @return  bool   True for success, false otherwise
      */
-
     public function checkPass($user = '', $pass = '')
     {
         $check = ssi_checkPassword($user, $pass, true);
