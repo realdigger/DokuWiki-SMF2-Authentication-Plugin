@@ -10,4 +10,4 @@
  */
 
 $conf['smf_path']   = '';
-$conf['smf_cache']  = 1;
+$conf['smf_cache']  = 0;
